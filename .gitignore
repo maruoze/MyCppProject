@@ -193,5 +193,16 @@ FakesAssemblies/
 *.plg
 
 # Visual Studio 6 workspace options file
+/Debug
+/ipch
+/res
 *.opt
-/MyMFCApp
+*.sln
+*.sdf
+*.opendb
+*.aps
+*.rc
+*.vcxproj
+*.filters
+
+
