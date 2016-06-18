@@ -64,6 +64,7 @@ BEGIN_MESSAGE_MAP(CPHPScanDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_COMMAND(ID_ABOUT, &CPHPScanDlg::OnAbout)
 END_MESSAGE_MAP()
 
 
@@ -152,3 +153,10 @@ HCURSOR CPHPScanDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+
+void CPHPScanDlg::OnAbout()
+{
+	// TODO: 在此添加命令处理程序代码
+	MessageBox(L"测试弹出", L"关于",MB_OK);
+}
