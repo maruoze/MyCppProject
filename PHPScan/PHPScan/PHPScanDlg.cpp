@@ -51,6 +51,10 @@ END_MESSAGE_MAP()
 
 CPHPScanDlg::CPHPScanDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_PHPSCAN_DIALOG, pParent)
+	, m_staticCurCount(_T(""))
+	, m_staticCurFile(_T(""))
+	, m_staticPath(_T(""))
+	, m_staticTotalCount(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -58,6 +62,15 @@ CPHPScanDlg::CPHPScanDlg(CWnd* pParent /*=NULL*/)
 void CPHPScanDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_BUTTON_BROWSER, m_buttonBrowser);
+	DDX_Control(pDX, IDC_BUTTON_START, m_buttonStart);
+	DDX_Control(pDX, IDC_BUTTON_STOP, m_buttonStop);
+	DDX_Control(pDX, IDC_LIST_RESULT, m_listResult);
+	DDX_Control(pDX, IDC_PROGRESS_SCAN, m_progScan);
+	DDX_Text(pDX, IDC_STATIC_CUR_COUNT, m_staticCurCount);
+	DDX_Text(pDX, IDC_STATIC_CUR_FILE, m_staticCurFile);
+	DDX_Text(pDX, IDC_STATIC_PATH, m_staticPath);
+	DDX_Text(pDX, IDC_STATIC_TOTAL_COUNT, m_staticTotalCount);
 }
 
 BEGIN_MESSAGE_MAP(CPHPScanDlg, CDialogEx)

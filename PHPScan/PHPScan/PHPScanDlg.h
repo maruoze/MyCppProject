@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include "afxwin.h"
+#include "afxcmn.h"
 
 
 // CPHPScanDlg 对话框
@@ -35,4 +37,13 @@ public:
 	afx_msg void OnAbout();
 	// 初始化时设定窗口的大小
 	void SetWindowDisplay();
+	CButton m_buttonBrowser;
+	CButton m_buttonStart;
+	CButton m_buttonStop;
+	CListCtrl m_listResult;
+	CProgressCtrl m_progScan;
+	CString m_staticCurCount;
+	CString m_staticCurFile;
+	CString m_staticPath;
+	CString m_staticTotalCount;
 };
