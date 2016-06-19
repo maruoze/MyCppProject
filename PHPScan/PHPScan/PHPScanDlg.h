@@ -33,4 +33,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnAbout();
+	// 初始化时设定窗口的大小
+	void SetWindowDisplay();
 };

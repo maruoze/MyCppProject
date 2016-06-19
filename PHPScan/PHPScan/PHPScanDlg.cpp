@@ -100,7 +100,8 @@ BOOL CPHPScanDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-
+	// 重设
+	this->SetWindowDisplay();
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -159,4 +160,18 @@ void CPHPScanDlg::OnAbout()
 {
 	// TODO: 在此添加命令处理程序代码
 	MessageBox(L"测试弹出", L"关于",MB_OK);
+}
+
+
+// 初始化时设定窗口的大小
+void CPHPScanDlg::SetWindowDisplay()
+{
+	int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
+	int screenHeight= ::GetSystemMetrics(SM_CYSCREEN);
+	int windowWidth = 1200;
+	int windowHeight = 700;
+	int x = (screenWidth - windowWidth) / 2;
+	int y = (screenHeight - windowHeight) / 2;
+	CRect widowRect = CRect(x,y,windowWidth,windowHeight);
+	this->SetWindowPos(NULL, 0, 0, widowRect.Width(), widowRect.Height(), SWP_NOZORDER | SWP_NOMOVE);
 }
