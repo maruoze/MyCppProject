@@ -11,7 +11,6 @@
 #define new DEBUG_NEW
 #endif
 
-
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -57,6 +56,10 @@ CPHPScanDlg::CPHPScanDlg(CWnd* pParent /*=NULL*/)
 	, m_staticTotalCount(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_strButtonStart = _T("");
+	m_shortProgStart = 0;
+	m_shortProgEnd = 5;
+	//  m_intThreadIndex = 0;
 }
 
 void CPHPScanDlg::DoDataExchange(CDataExchange* pDX)
@@ -78,6 +81,12 @@ BEGIN_MESSAGE_MAP(CPHPScanDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_COMMAND(ID_ABOUT, &CPHPScanDlg::OnAbout)
+	ON_BN_CLICKED(IDC_BUTTON_BROWSER, &CPHPScanDlg::OnClickedButtonBrowser)
+	ON_BN_CLICKED(IDC_BUTTON_START, &CPHPScanDlg::OnClickedButtonStart)
+	ON_BN_CLICKED(IDC_BUTTON_STOP, &CPHPScanDlg::OnClickedButtonStop)
+	ON_MESSAGE(WM_ZMY_REFRESH, &CPHPScanDlg::OnZmyRefresh)
+	ON_MESSAGE(WM_ZMY_GETALLFOLDER_FINISH, &CPHPScanDlg::OnZmyGetallfolderFinish)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -179,6 +188,7 @@ void CPHPScanDlg::OnAbout()
 // 初始化时设定窗口的大小
 void CPHPScanDlg::SetWindowDisplay()
 {
+	//设定窗口大小
 	int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
 	int screenHeight= ::GetSystemMetrics(SM_CYSCREEN);
 	int windowWidth = 1200;
@@ -187,4 +197,135 @@ void CPHPScanDlg::SetWindowDisplay()
 	int y = (screenHeight - windowHeight) / 2;
 	CRect widowRect = CRect(x,y,windowWidth,windowHeight);
 	this->SetWindowPos(NULL, 0, 0, widowRect.Width(), widowRect.Height(), SWP_NOZORDER | SWP_NOMOVE);
+	//初始化相关控件
+	m_progScan.SetRange(m_shortProgStart, m_shortProgEnd);
+	m_progScan.SetStep(1);
+	m_progScan.SetPos(0);
+
+	m_staticCurCount = L"0";
+	m_staticTotalCount.Format(L"%d", m_shortProgEnd);
+	UpdateData(false);
+}
+
+
+void CPHPScanDlg::OnClickedButtonBrowser()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_staticPath=this->GetFolderFullpath(L"C:\\");
+	if (m_staticPath != "") {
+		m_buttonStart.EnableWindow(true);
+	}	
+	UpdateData(false);
+}
+
+
+CString CPHPScanDlg::GetFolderFullpath(LPCTSTR lpszDefault)
+{
+	TCHAR buffDisplayName[MAX_PATH];
+	TCHAR fullpath[MAX_PATH];
+	BROWSEINFO  browseinfo;
+	LPITEMIDLIST lpitemidlist;
+
+	ZeroMemory(&browseinfo, sizeof(BROWSEINFO));
+	browseinfo.pszDisplayName = buffDisplayName;
+	browseinfo.lpszTitle = _T("请选择目录");
+	browseinfo.ulFlags = BIF_RETURNONLYFSDIRS;
+	browseinfo.lParam = (LPARAM)lpszDefault;
+	browseinfo.lpfn = CZMyCallbackProc::BrowseCallbackProc;
+
+	if (!(lpitemidlist = SHBrowseForFolder(&browseinfo)))
+	{
+		AfxMessageBox(_T("没有选择目录"));
+		return CString(_T(""));
+	}
+	else
+	{
+		SHGetPathFromIDList(lpitemidlist, fullpath);
+		CoTaskMemFree(lpitemidlist);
+		return CString(fullpath);
+	}
+	return CString();
+}
+
+
+void CPHPScanDlg::OnClickedButtonStart()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	//控件相关状态操作
+	CString strButtonStart,strButtonPause;
+	GetDlgItemTextW(IDC_BUTTON_START, m_strButtonStart);
+	strButtonStart.LoadStringW(IDS_STRING_START);
+	strButtonPause.LoadStringW(IDS_STRING_SUSPEND);
+	if (m_strButtonStart == strButtonStart) {
+		// 创建事件
+		m_hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		// 事件置位
+		SetEvent(m_hEvent);
+		m_strButtonStart.LoadStringW(IDS_STRING_SUSPEND);
+		m_buttonStart.SetWindowTextW(m_strButtonStart);
+		//任务线程操作
+		m_ctMyThread.m_intThreadMax = 1;
+		m_ctThread=m_ctMyThread.CreateThread(this);
+	}else if(m_strButtonStart==strButtonPause) {
+		m_strButtonStart.LoadStringW(IDS_STRING_CONTINUE);
+		m_buttonStart.SetWindowTextW(m_strButtonStart);
+		m_ctMyThread.ThreadSuspend(m_ctThread);
+	}else {
+		m_strButtonStart.LoadStringW(IDS_STRING_SUSPEND);
+		m_buttonStart.SetWindowTextW(m_strButtonStart);
+		m_ctMyThread.ThreadResume(m_ctThread);
+	}
+	if (m_buttonStop.IsWindowEnabled()==false) {
+		m_buttonStop.EnableWindow(true);
+	}	
+	//刷新显示
+	SetTimer(ID_TIMER_REFRESH, 100, NULL);
+}
+
+
+void CPHPScanDlg::OnClickedButtonStop()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	//控件相关状态操作
+	m_buttonStop.EnableWindow(false);
+	m_strButtonStart.LoadStringW(IDS_STRING_START);
+	m_buttonStart.SetWindowTextW(m_strButtonStart);
+	//任务线程操作
+	m_ctMyThread.ThreadStop(m_ctThread);
+}
+
+
+afx_msg LRESULT CPHPScanDlg::OnZmyRefresh(WPARAM wParam, LPARAM lParam)
+{
+	//int i = _ttoi(m_staticCurCount);
+	//m_progScan.SetPos(i);
+	CString staticTotalCount;
+	staticTotalCount.Format(L"%d", m_allFolders.size());
+	m_staticTotalCount = staticTotalCount;
+	UpdateData(false);
+	return 0;
+}
+
+
+afx_msg LRESULT CPHPScanDlg::OnZmyGetallfolderFinish(WPARAM wParam, LPARAM lParam)
+{
+	m_buttonStop.EnableWindow(false);
+	m_strButtonStart.LoadStringW(IDS_STRING_START);
+	m_buttonStart.SetWindowTextW(m_strButtonStart);
+	return 0;
+}
+
+
+void CPHPScanDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	switch (nIDEvent)
+	{
+	default:
+		break;
+	case ID_TIMER_REFRESH:
+		PostMessage(WM_ZMY_REFRESH);
+		break;
+	}
+	CDialogEx::OnTimer(nIDEvent);
 }

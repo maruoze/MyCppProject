@@ -6,6 +6,13 @@
 #include "afxwin.h"
 #include "afxcmn.h"
 
+//新类添加
+#include "ZMyCallbackProc.h"
+#include "ZMyThread.h"
+
+//自定义消息
+#define WM_ZMY_REFRESH WM_USER+1
+#define WM_ZMY_GETALLFOLDER_FINISH WM_USER+2
 
 // CPHPScanDlg 对话框
 class CPHPScanDlg : public CDialogEx
@@ -46,4 +53,28 @@ public:
 	CString m_staticCurFile;
 	CString m_staticPath;
 	CString m_staticTotalCount;
+	afx_msg void OnClickedButtonBrowser();
+	CString GetFolderFullpath(LPCTSTR lpszDefault);
+	afx_msg void OnClickedButtonStart();
+	CString m_strButtonStart;
+	afx_msg void OnClickedButtonStop();
+	short m_shortProgStart;
+	short m_shortProgEnd;
+protected:
+	afx_msg LRESULT OnZmyRefresh(WPARAM wParam, LPARAM lParam);
+public:
+	//线程索引
+//	int m_intThreadIndex;
+	CZMyThread m_ctMyThread;
+	vector<CWinThread*> m_ctThread;
+	HANDLE m_hEvent;
+	vector<CString> m_allFolders;
+protected:
+	afx_msg LRESULT OnZmyGetallfolderFinish(WPARAM wParam, LPARAM lParam);
+public:
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	enum m_emIDTimer
+	{
+		ID_TIMER_REFRESH = 100,
+	};
 };
