@@ -3,7 +3,7 @@
 #include "PHPScanDlg.h"
 #include "ZMyFile.h"
 
-int CZMyThread::m_intThreadMax = 2;
+int CZMyThread::m_intThreadMax = 5;
 
 CZMyThread::CZMyThread()
 {

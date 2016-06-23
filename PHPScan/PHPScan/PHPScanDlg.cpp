@@ -54,6 +54,11 @@ CPHPScanDlg::CPHPScanDlg(CWnd* pParent /*=NULL*/)
 	, m_staticCurFile(_T(""))
 	, m_staticPath(_T(""))
 	, m_staticTotalCount(_T(""))
+	, m_intRunTime(0)
+	, m_staticRunTime(_T(""))
+	, m_ctThreadFlag(0)
+	, m_staticTotalCountFile(_T(""))
+	, m_intThreadFinshed(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_strButtonStart = _T("");
@@ -74,6 +79,8 @@ void CPHPScanDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_CUR_FILE, m_staticCurFile);
 	DDX_Text(pDX, IDC_STATIC_PATH, m_staticPath);
 	DDX_Text(pDX, IDC_STATIC_TOTAL_COUNT, m_staticTotalCount);
+	DDX_Text(pDX, IDC_STATIC_RUNTIME, m_staticRunTime);
+	DDX_Text(pDX, IDC_STATIC_TOTAL_COUNT_FILE, m_staticTotalCountFile);
 }
 
 BEGIN_MESSAGE_MAP(CPHPScanDlg, CDialogEx)
@@ -87,6 +94,7 @@ BEGIN_MESSAGE_MAP(CPHPScanDlg, CDialogEx)
 	ON_MESSAGE(WM_ZMY_REFRESH, &CPHPScanDlg::OnZmyRefresh)
 	ON_MESSAGE(WM_ZMY_GETALLFOLDER_FINISH, &CPHPScanDlg::OnZmyGetallfolderFinish)
 	ON_WM_TIMER()
+	ON_MESSAGE(WM_ZMY_GETALLFILE_FINISH, &CPHPScanDlg::OnZmyGetallfileFinish)
 END_MESSAGE_MAP()
 
 
@@ -204,6 +212,7 @@ void CPHPScanDlg::SetWindowDisplay()
 
 	m_staticCurCount = L"0";
 	m_staticTotalCount.Format(L"%d", m_shortProgEnd);
+	m_staticPath = L"E:\\";
 	UpdateData(false);
 }
 
@@ -266,18 +275,23 @@ void CPHPScanDlg::OnClickedButtonStart()
 		//任务线程操作
 		m_ctMyThread.m_intThreadMax = 1;
 		m_ctThread=m_ctMyThread.CreateThread(this);
+		m_intRunTime = 0;
+		m_ctThreadFlag = 0;//运行
 	}else if(m_strButtonStart==strButtonPause) {
 		m_strButtonStart.LoadStringW(IDS_STRING_CONTINUE);
 		m_buttonStart.SetWindowTextW(m_strButtonStart);
 		m_ctMyThread.ThreadSuspend(m_ctThread);
+		m_ctThreadFlag = 1;//暂停
 	}else {
 		m_strButtonStart.LoadStringW(IDS_STRING_SUSPEND);
 		m_buttonStart.SetWindowTextW(m_strButtonStart);
 		m_ctMyThread.ThreadResume(m_ctThread);
+		m_ctThreadFlag = 0;
 	}
 	if (m_buttonStop.IsWindowEnabled()==false) {
 		m_buttonStop.EnableWindow(true);
 	}	
+	m_staticTotalCountFile = L"0";
 	//刷新显示
 	SetTimer(ID_TIMER_REFRESH, 100, NULL);
 }
@@ -292,6 +306,7 @@ void CPHPScanDlg::OnClickedButtonStop()
 	m_buttonStart.SetWindowTextW(m_strButtonStart);
 	//任务线程操作
 	m_ctMyThread.ThreadStop(m_ctThread);
+	m_ctThreadFlag = 2;//停止
 }
 
 
@@ -299,9 +314,12 @@ afx_msg LRESULT CPHPScanDlg::OnZmyRefresh(WPARAM wParam, LPARAM lParam)
 {
 	//int i = _ttoi(m_staticCurCount);
 	//m_progScan.SetPos(i);
-	CString staticTotalCount;
+	CString staticTotalCount,staticTotalCountFile;
 	staticTotalCount.Format(L"%d", m_allFolders.size());
 	m_staticTotalCount = staticTotalCount;
+	staticTotalCountFile.Format(L"%d", m_vcAllFileResult.size());
+	m_staticTotalCountFile = staticTotalCountFile;
+
 	UpdateData(false);
 	return 0;
 }
@@ -309,9 +327,9 @@ afx_msg LRESULT CPHPScanDlg::OnZmyRefresh(WPARAM wParam, LPARAM lParam)
 
 afx_msg LRESULT CPHPScanDlg::OnZmyGetallfolderFinish(WPARAM wParam, LPARAM lParam)
 {
-	m_buttonStop.EnableWindow(false);
-	m_strButtonStart.LoadStringW(IDS_STRING_START);
-	m_buttonStart.SetWindowTextW(m_strButtonStart);
+	m_intThreadFinshed = 0;
+	m_ctMyFileThread.m_intThreadMax = 10;
+	m_ctThread = m_ctMyFileThread.CreateThread(this);
 	return 0;
 }
 
@@ -324,8 +342,38 @@ void CPHPScanDlg::OnTimer(UINT_PTR nIDEvent)
 	default:
 		break;
 	case ID_TIMER_REFRESH:
+		GetRunTime();
 		PostMessage(WM_ZMY_REFRESH);
 		break;
 	}
 	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+int CPHPScanDlg::GetRunTime()
+{
+	if (m_ctThreadFlag == 0) {
+		m_intRunTime++;
+	}
+	int i_usec = m_intRunTime % 10;
+	int i_sec = (m_intRunTime / 10) % 60;
+	int i_min = (m_intRunTime / 10 / 60) % 60;
+	int i_hour = (m_intRunTime / 10 / 3600) % 60;
+	CString cs_runTime;
+	cs_runTime.Format(L"%03d:%02d:%02d.%d",i_hour,i_min,i_sec,i_usec);
+	m_staticRunTime = cs_runTime;
+	return 0;
+}
+
+
+afx_msg LRESULT CPHPScanDlg::OnZmyGetallfileFinish(WPARAM wParam, LPARAM lParam)
+{
+	m_intThreadFinshed++;
+	if (m_intThreadFinshed == m_ctMyFileThread.m_intThreadMax) {
+		m_buttonStop.EnableWindow(false);
+		m_strButtonStart.LoadStringW(IDS_STRING_START);
+		m_buttonStart.SetWindowTextW(m_strButtonStart);
+		m_ctThreadFlag = 2;
+	}
+	return 0;
 }

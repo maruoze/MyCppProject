@@ -5,14 +5,17 @@
 #pragma once
 #include "afxwin.h"
 #include "afxcmn.h"
+#include <atomic>
 
 //新类添加
 #include "ZMyCallbackProc.h"
-#include "ZMyThread.h"
+#include "ZMyFileThread.h"
 
 //自定义消息
 #define WM_ZMY_REFRESH WM_USER+1
 #define WM_ZMY_GETALLFOLDER_FINISH WM_USER+2
+#define WM_ZMY_GETALLFILE_FINISH WM_USER+3
+
 
 // CPHPScanDlg 对话框
 class CPHPScanDlg : public CDialogEx
@@ -66,6 +69,7 @@ public:
 	//线程索引
 //	int m_intThreadIndex;
 	CZMyThread m_ctMyThread;
+	CZMyFileThread m_ctMyFileThread;
 	vector<CWinThread*> m_ctThread;
 	HANDLE m_hEvent;
 	vector<CString> m_allFolders;
@@ -77,4 +81,15 @@ public:
 	{
 		ID_TIMER_REFRESH = 100,
 	};
+	int m_intRunTime;
+	CString m_staticRunTime;
+	int m_ctThreadFlag;
+	int GetRunTime();
+protected:
+	afx_msg LRESULT OnZmyGetallfileFinish(WPARAM wParam, LPARAM lParam);
+public:
+	// 存储查询文件结果
+	vector<CString> m_vcAllFileResult;
+	CString m_staticTotalCountFile;
+	int m_intThreadFinshed;
 };

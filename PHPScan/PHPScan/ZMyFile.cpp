@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ZMyFile.h"
 bool CZMyFile::m_bRecycleFlag = true;
+mutex m_mutVector;
 
 CZMyFile::CZMyFile()
 {
@@ -41,6 +42,7 @@ void CZMyFile::GetAllUnderFolderByFolderEx(CString csFolderName,CPHPScanDlg * dl
 		}
 	}
 
+	dlg->m_staticCurFile = csFolderName;
 	(dlg->m_allFolders).push_back(csFolderName);	
 	CFileFind fileFinder;
 	CString filePath = csFolderName + _T("//*.*");
@@ -57,3 +59,60 @@ void CZMyFile::GetAllUnderFolderByFolderEx(CString csFolderName,CPHPScanDlg * dl
 	fileFinder.Close();
 }
 
+
+
+int CZMyFile::GetAllFileByExt(LPVOID pParm, CString ext)
+{
+	pair<int, LPVOID>*lpParm = (pair<int, LPVOID>*)pParm;
+	int intThreadIndex = lpParm->first;
+	CPHPScanDlg* dlg = (CPHPScanDlg*)lpParm->second;
+	int intThreadMax = CZMyFileThread::m_intThreadMax;
+	int intFolderTotal = dlg->m_allFolders.size();
+	int intStep = intFolderTotal / intThreadMax + 1;
+	int intLoopStart = intStep*intThreadIndex;
+	int intLoopStop = intStep*(intThreadIndex + 1);
+	if (intLoopStart != 0) {
+		intLoopStart = intLoopStart;
+	}
+	if (intLoopStop >= intFolderTotal) {
+		intLoopStop = intFolderTotal;
+	}
+	CFileFind fileFinder;
+	MSG msg;
+	for (int i = intLoopStart; i < intLoopStop; i++)
+	{
+		//获取退出消息
+		while (PeekMessage(&msg, NULL, WM_THREAD_STOP, WM_THREAD_STOP, PM_REMOVE)) {
+			switch (msg.message) {
+			case WM_THREAD_STOP:
+				m_bRecycleFlag = false;
+			}
+		}
+		if (!m_bRecycleFlag) {
+			break;
+		}
+		CString csForlder = dlg->m_allFolders.at(i);
+		CString filePath= csForlder+ _T("//*.*");
+		BOOL bFinished = fileFinder.FindFile(filePath);
+		while (bFinished&&m_bRecycleFlag)
+		{
+			
+			bFinished = fileFinder.FindNextFile();
+			if (!fileFinder.IsDirectory()) {
+				CString filePath = fileFinder.GetFilePath();
+				CString fileName = fileFinder.GetFileName();
+				int dotPos = fileName.ReverseFind('.');
+				CString fileExt = fileName.Right(fileName.GetLength() - dotPos);
+				if (fileExt == ext) {
+					m_mutVector.lock();
+					dlg->m_vcAllFileResult.push_back(filePath);
+					dlg->m_staticCurFile = filePath;
+					m_mutVector.unlock();
+				}
+			}
+			
+		}
+	}
+	fileFinder.Close();
+	return 0;
+}
