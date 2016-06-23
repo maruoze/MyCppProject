@@ -112,6 +112,9 @@ int CZMyFile::GetAllFileByExt(LPVOID pParm, CString ext)
 			}
 			
 		}
+		m_mutVector.lock();
+		dlg->m_intProgCur++;
+		m_mutVector.unlock();
 	}
 	fileFinder.Close();
 	return 0;

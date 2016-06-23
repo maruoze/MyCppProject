@@ -15,6 +15,8 @@
 #define WM_ZMY_REFRESH WM_USER+1
 #define WM_ZMY_GETALLFOLDER_FINISH WM_USER+2
 #define WM_ZMY_GETALLFILE_FINISH WM_USER+3
+#define WM_ZMY_GETALLFOLDER_EXIT WM_USER+4
+#define WM_ZMY_GETALLFILE_EXIT WM_USER+5
 
 
 // CPHPScanDlg ¶Ô»°¿ò
@@ -61,8 +63,9 @@ public:
 	afx_msg void OnClickedButtonStart();
 	CString m_strButtonStart;
 	afx_msg void OnClickedButtonStop();
-	short m_shortProgStart;
-	short m_shortProgEnd;
+	int m_intProgStart;
+	int m_intProgEnd;
+	int m_intProgCur;
 protected:
 	afx_msg LRESULT OnZmyRefresh(WPARAM wParam, LPARAM lParam);
 public:
@@ -92,4 +95,8 @@ public:
 	vector<CString> m_vcAllFileResult;
 	CString m_staticTotalCountFile;
 	int m_intThreadFinshed;
+protected:
+	afx_msg LRESULT OnZmyGetallfolderExit(WPARAM wParam, LPARAM lParam);
+//	afx_msg LRESULT OnZmygetallfileExit(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnZmyGetallfileExit(WPARAM wParam, LPARAM lParam);
 };

@@ -40,6 +40,7 @@ vector<CWinThread*> CZMyFileThread::CreateThread(LPVOID lpPara)
 	vector<CWinThread*> p_ctThread;
 	CPHPScanDlg* dlg = (CPHPScanDlg*)lpPara;
 	dlg->m_vcAllFileResult.clear();
+	dlg->m_intProgCur = 0;
 	for (int i = 0; i < m_intThreadMax; i++)
 	{
 		pair<int, LPVOID> *pLpPara = new pair<int, LPVOID>;
