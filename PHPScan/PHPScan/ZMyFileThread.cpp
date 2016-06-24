@@ -26,10 +26,14 @@ UINT CZMyFileThread::ThreadFunc(LPVOID pParm)
 	//WaitForSingleObject(dlg->m_hEvent, INFINITE);
 	CZMyFile::m_bRecycleFlag = true;
 	CString csExt = L".php";
-	CZMyFile::GetAllFileByExt(pParm, csExt);
+	bool bReturn=CZMyFile::GetAllFileByExt(pParm, csExt);
 	// 处理完成后即将事件对象置位
 	//SetEvent(dlg->m_hEvent);
-	dlg->PostMessageW(WM_ZMY_GETALLFILE_FINISH, 0, NULL);
+	if (bReturn) {
+		dlg->PostMessageW(WM_ZMY_GETALLFILE_FINISH, 0, NULL);
+	}else {
+		dlg->PostMessageW(WM_ZMY_GETALLFILE_EXIT, 0, NULL);
+	}
 	return 0;
 }
 

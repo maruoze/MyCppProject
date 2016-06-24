@@ -63,7 +63,7 @@ CPHPScanDlg::CPHPScanDlg(CWnd* pParent /*=NULL*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_strButtonStart = _T("");
 	m_intProgStart = 0;
-	m_intProgEnd = 0;
+	m_intProgEnd = 100;
 	//  m_intThreadIndex = 0;
 }
 
@@ -208,13 +208,9 @@ void CPHPScanDlg::SetWindowDisplay()
 	CRect widowRect = CRect(x,y,windowWidth,windowHeight);
 	this->SetWindowPos(NULL, 0, 0, widowRect.Width(), widowRect.Height(), SWP_NOZORDER | SWP_NOMOVE);
 	//初始化相关控件
-	m_progScan.SetRange(m_intProgStart, m_intProgEnd);
-	m_progScan.SetStep(1);
-	m_progScan.SetPos(0);
-
-	m_staticCurCount = L"0";
-	m_staticTotalCount.Format(L"%d", m_intProgEnd);
+	m_staticTotalCount.Format(L"%d", 0);
 	m_staticPath = L"E:\\";
+	InitControl();
 	UpdateData(false);
 }
 
@@ -279,6 +275,7 @@ void CPHPScanDlg::OnClickedButtonStart()
 		m_ctThread=m_ctMyThread.CreateThread(this);
 		m_intRunTime = 0;
 		m_ctThreadFlag = 0;//运行
+		InitControl();
 	}else if(m_strButtonStart==strButtonPause) {
 		m_strButtonStart.LoadStringW(IDS_STRING_CONTINUE);
 		m_buttonStart.SetWindowTextW(m_strButtonStart);
@@ -290,11 +287,11 @@ void CPHPScanDlg::OnClickedButtonStart()
 		m_ctMyThread.ThreadResume(m_ctThread);
 		m_ctThreadFlag = 0;
 	}
-	if (m_buttonStop.IsWindowEnabled()==false) {
-		m_buttonStop.EnableWindow(true);
+	if (m_buttonStop.IsWindowEnabled()== FALSE) {
+		m_buttonStop.EnableWindow(TRUE);
 	}	
-	if (m_buttonBrowser.IsWindowEnabled() == true) {
-		m_buttonBrowser.EnableWindow(false);
+	if (m_buttonBrowser.IsWindowEnabled() == TRUE) {
+		m_buttonBrowser.EnableWindow(FALSE);
 	}
 	m_staticTotalCountFile = L"0";
 	//刷新显示
@@ -333,11 +330,6 @@ afx_msg LRESULT CPHPScanDlg::OnZmyRefresh(WPARAM wParam, LPARAM lParam)
 
 afx_msg LRESULT CPHPScanDlg::OnZmyGetallfolderFinish(WPARAM wParam, LPARAM lParam)
 {
-	m_intProgEnd = 100;
-	m_progScan.SetRange(m_intProgStart, m_intProgEnd);
-	m_progScan.SetStep(1);
-	m_progScan.SetPos(0);
-
 	m_intThreadFinshed = 0;
 	m_ctMyFileThread.m_intThreadMax = 5;
 	m_ctThread = m_ctMyFileThread.CreateThread(this);
@@ -395,11 +387,37 @@ afx_msg LRESULT CPHPScanDlg::OnZmyGetallfileFinish(WPARAM wParam, LPARAM lParam)
 
 afx_msg LRESULT CPHPScanDlg::OnZmyGetallfolderExit(WPARAM wParam, LPARAM lParam)
 {
+	if (m_buttonBrowser.IsWindowEnabled() == false) {
+		m_buttonBrowser.EnableWindow(true);
+	}
 	return 0;
 }
 
 
 afx_msg LRESULT CPHPScanDlg::OnZmyGetallfileExit(WPARAM wParam, LPARAM lParam)
 {
+	m_intThreadFinshed++;
+	if (m_intThreadFinshed == m_ctMyFileThread.m_intThreadMax) {
+		m_buttonStop.EnableWindow(false);
+		m_strButtonStart.LoadStringW(IDS_STRING_START);
+		m_buttonStart.SetWindowTextW(m_strButtonStart);
+		m_ctThreadFlag = 2;
+		if (m_buttonBrowser.IsWindowEnabled() == false) {
+			m_buttonBrowser.EnableWindow(true);
+		}
+	}
+	return 0;
+}
+
+
+// //控件信息初始化
+int CPHPScanDlg::InitControl()
+{
+	m_staticCurCount = L"0";
+	m_staticTotalCount = L"0";
+	m_staticTotalCountFile = L"0";
+	m_progScan.SetRange(m_intProgStart, m_intProgEnd);
+	m_progScan.SetStep(1);
+	m_progScan.SetPos(0);
 	return 0;
 }

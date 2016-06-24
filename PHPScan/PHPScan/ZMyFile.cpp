@@ -31,7 +31,7 @@ void CZMyFile::GetAllUnderFolderByFolder(CString csFolderName, vector<CString> &
 	fileFinder.Close();
 }
 
-void CZMyFile::GetAllUnderFolderByFolderEx(CString csFolderName,CPHPScanDlg * dlg)
+bool CZMyFile::GetAllUnderFolderByFolderEx(CString csFolderName,CPHPScanDlg * dlg)
 {
 	//获取退出消息
 	MSG msg;
@@ -55,13 +55,17 @@ void CZMyFile::GetAllUnderFolderByFolderEx(CString csFolderName,CPHPScanDlg * dl
 			CString curFolder = fileFinder.GetFilePath();
 			CZMyFile::GetAllUnderFolderByFolderEx(curFolder, dlg);
 		}
+		else if(!m_bRecycleFlag){
+			return false;
+		}
 	}
 	fileFinder.Close();
+	return true;
 }
 
 
 
-int CZMyFile::GetAllFileByExt(LPVOID pParm, CString ext)
+bool CZMyFile::GetAllFileByExt(LPVOID pParm, CString ext)
 {
 	pair<int, LPVOID>*lpParm = (pair<int, LPVOID>*)pParm;
 	int intThreadIndex = lpParm->first;
@@ -89,7 +93,8 @@ int CZMyFile::GetAllFileByExt(LPVOID pParm, CString ext)
 			}
 		}
 		if (!m_bRecycleFlag) {
-			break;
+			//break;
+			return false;
 		}
 		CString csForlder = dlg->m_allFolders.at(i);
 		CString filePath= csForlder+ _T("//*.*");
@@ -117,5 +122,5 @@ int CZMyFile::GetAllFileByExt(LPVOID pParm, CString ext)
 		m_mutVector.unlock();
 	}
 	fileFinder.Close();
-	return 0;
+	return true;
 }

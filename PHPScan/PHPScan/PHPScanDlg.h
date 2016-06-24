@@ -99,4 +99,7 @@ protected:
 	afx_msg LRESULT OnZmyGetallfolderExit(WPARAM wParam, LPARAM lParam);
 //	afx_msg LRESULT OnZmygetallfileExit(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnZmyGetallfileExit(WPARAM wParam, LPARAM lParam);
+public:
+	// //控件信息初始化
+	int InitControl();
 };

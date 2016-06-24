@@ -24,10 +24,14 @@ UINT CZMyThread::ThreadFunc(LPVOID pParm)
 	WaitForSingleObject(dlg->m_hEvent, INFINITE);
 	dlg->m_allFolders.clear();
 	CZMyFile::m_bRecycleFlag = true;
-	CZMyFile::GetAllUnderFolderByFolderEx(dlg->m_staticPath,dlg);
+	bool bReturn=CZMyFile::GetAllUnderFolderByFolderEx(dlg->m_staticPath,dlg);
 	// 处理完成后即将事件对象置位
 	SetEvent(dlg->m_hEvent);
-	dlg->PostMessageW(WM_ZMY_GETALLFOLDER_FINISH,0,NULL);
+	if (bReturn) {
+		dlg->PostMessageW(WM_ZMY_GETALLFOLDER_FINISH, 0, NULL);
+	}else {
+		dlg->PostMessageW(WM_ZMY_GETALLFOLDER_EXIT, 0, NULL);
+	}
 	return 0;
 }
 
