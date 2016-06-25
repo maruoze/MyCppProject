@@ -41,9 +41,10 @@ bool CZMyFile::GetAllUnderFolderByFolderEx(CString csFolderName,CPHPScanDlg * dl
 				m_bRecycleFlag=false;
 		}
 	}
-
+	m_mutVector.lock();
 	dlg->m_staticCurFile = csFolderName;
 	(dlg->m_allFolders).push_back(csFolderName);	
+	m_mutVector.unlock();
 	CFileFind fileFinder;
 	CString filePath = csFolderName + _T("//*.*");
 	BOOL bFinished = fileFinder.FindFile(filePath);

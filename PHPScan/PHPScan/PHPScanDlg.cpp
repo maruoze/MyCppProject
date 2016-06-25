@@ -59,6 +59,7 @@ CPHPScanDlg::CPHPScanDlg(CWnd* pParent /*=NULL*/)
 	, m_ctThreadFlag(0)
 	, m_staticTotalCountFile(_T(""))
 	, m_intThreadFinshed(0)
+	, m_cmThreadCount(_T("5"))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_strButtonStart = _T("");
@@ -81,6 +82,8 @@ void CPHPScanDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_TOTAL_COUNT, m_staticTotalCount);
 	DDX_Text(pDX, IDC_STATIC_RUNTIME, m_staticRunTime);
 	DDX_Text(pDX, IDC_STATIC_TOTAL_COUNT_FILE, m_staticTotalCountFile);
+	//  DDX_CBIndex(pDX, IDC_COMBO_THREAD_COUNT, m_cmThreadCount);
+	DDX_CBString(pDX, IDC_COMBO_THREAD_COUNT, m_cmThreadCount);
 }
 
 BEGIN_MESSAGE_MAP(CPHPScanDlg, CDialogEx)
@@ -97,6 +100,7 @@ BEGIN_MESSAGE_MAP(CPHPScanDlg, CDialogEx)
 	ON_MESSAGE(WM_ZMY_GETALLFILE_FINISH, &CPHPScanDlg::OnZmyGetallfileFinish)
 	ON_MESSAGE(WM_ZMY_GETALLFOLDER_EXIT, &CPHPScanDlg::OnZmyGetallfolderExit)
 	ON_MESSAGE(WM_ZMY_GETALLFILE_EXIT, &CPHPScanDlg::OnZmyGetallfileExit)
+	ON_CBN_SELCHANGE(IDC_COMBO_THREAD_COUNT, &CPHPScanDlg::OnCbnSelchangeComboThreadCount)
 END_MESSAGE_MAP()
 
 
@@ -276,6 +280,8 @@ void CPHPScanDlg::OnClickedButtonStart()
 		m_intRunTime = 0;
 		m_ctThreadFlag = 0;//运行
 		InitControl();
+		GetDlgItem(IDC_COMBO_THREAD_COUNT)->EnableWindow(FALSE);
+		PostMessage(WM_ZMY_REFRESH);
 	}else if(m_strButtonStart==strButtonPause) {
 		m_strButtonStart.LoadStringW(IDS_STRING_CONTINUE);
 		m_buttonStart.SetWindowTextW(m_strButtonStart);
@@ -287,14 +293,15 @@ void CPHPScanDlg::OnClickedButtonStart()
 		m_ctMyThread.ThreadResume(m_ctThread);
 		m_ctThreadFlag = 0;
 	}
-	if (m_buttonStop.IsWindowEnabled()== FALSE) {
-		m_buttonStop.EnableWindow(TRUE);
+	if (m_buttonStop.IsWindowEnabled()==FALSE) {
+		m_buttonStop.EnableWindow(true);
 	}	
 	if (m_buttonBrowser.IsWindowEnabled() == TRUE) {
 		m_buttonBrowser.EnableWindow(FALSE);
 	}
 	m_staticTotalCountFile = L"0";
 	//刷新显示
+	KillTimer(ID_TIMER_REFRESH);
 	SetTimer(ID_TIMER_REFRESH, 100, NULL);
 }
 
@@ -331,7 +338,7 @@ afx_msg LRESULT CPHPScanDlg::OnZmyRefresh(WPARAM wParam, LPARAM lParam)
 afx_msg LRESULT CPHPScanDlg::OnZmyGetallfolderFinish(WPARAM wParam, LPARAM lParam)
 {
 	m_intThreadFinshed = 0;
-	m_ctMyFileThread.m_intThreadMax = 5;
+	m_ctMyFileThread.m_intThreadMax = _ttoi(m_cmThreadCount)==0?5: _ttoi(m_cmThreadCount);
 	m_ctThread = m_ctMyFileThread.CreateThread(this);
 	return 0;
 }
@@ -380,6 +387,9 @@ afx_msg LRESULT CPHPScanDlg::OnZmyGetallfileFinish(WPARAM wParam, LPARAM lParam)
 		if (m_buttonBrowser.IsWindowEnabled() == false) {
 			m_buttonBrowser.EnableWindow(true);
 		}
+		GetDlgItem(IDC_COMBO_THREAD_COUNT)->EnableWindow(TRUE);
+		KillTimer(ID_TIMER_REFRESH);
+		PostMessage(WM_ZMY_REFRESH);
 	}
 	return 0;
 }
@@ -405,6 +415,8 @@ afx_msg LRESULT CPHPScanDlg::OnZmyGetallfileExit(WPARAM wParam, LPARAM lParam)
 		if (m_buttonBrowser.IsWindowEnabled() == false) {
 			m_buttonBrowser.EnableWindow(true);
 		}
+		KillTimer(ID_TIMER_REFRESH);
+		PostMessage(WM_ZMY_REFRESH);
 	}
 	return 0;
 }
@@ -420,4 +432,11 @@ int CPHPScanDlg::InitControl()
 	m_progScan.SetStep(1);
 	m_progScan.SetPos(0);
 	return 0;
+}
+
+
+void CPHPScanDlg::OnCbnSelchangeComboThreadCount()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
 }

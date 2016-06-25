@@ -102,4 +102,7 @@ protected:
 public:
 	// //控件信息初始化
 	int InitControl();
+//	int m_cmThreadCount;
+	afx_msg void OnCbnSelchangeComboThreadCount();
+	CString m_cmThreadCount;
 };
