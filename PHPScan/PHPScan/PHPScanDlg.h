@@ -105,4 +105,15 @@ public:
 //	int m_cmThreadCount;
 	afx_msg void OnCbnSelchangeComboThreadCount();
 	CString m_cmThreadCount;
+	CString m_strWorkDir;
+	CString m_strPHPTrojanFeatureFile;
+	CString m_strTrojanFeatureFullPath;
+	int InitConfig();
+	vector<CString> m_vcPHPTrajonFeature;
+	vector<CString> m_vcExtName;
+	int InitExtNameVC();
+	int InitListResult();
+	CButton m_cbCheckPHP;
+	CButton m_cbCheckINC;
+	CButton m_cbCheckTXT;
 };

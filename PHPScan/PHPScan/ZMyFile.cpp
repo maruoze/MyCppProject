@@ -113,6 +113,13 @@ bool CZMyFile::GetAllFileByExt(LPVOID pParm, CString ext)
 					m_mutVector.lock();
 					dlg->m_vcAllFileResult.push_back(filePath);
 					dlg->m_staticCurFile = filePath;
+					int nIndex = dlg->m_listResult.GetItemCount();
+					int nRow = dlg->m_listResult.InsertItem(nIndex, L"");// ²åÈëÐÐ
+					CString strIndex;
+					strIndex.Format(L"%d", nRow + 1);
+					dlg->m_listResult.SetItemText(nRow, 1, strIndex);
+					dlg->m_listResult.SetItemText(nRow, 2, fileName);
+					dlg->m_listResult.SetItemText(nRow, 3, filePath);
 					m_mutVector.unlock();
 				}
 			}
@@ -124,4 +131,47 @@ bool CZMyFile::GetAllFileByExt(LPVOID pParm, CString ext)
 	}
 	fileFinder.Close();
 	return true;
+}
+
+
+ BOOL CZMyFile::ReadFileToVsctor(CString filePath, vector<CString> &vc)
+{
+	if(PathFileExistsW(filePath)) {
+		CStdioFile stdioFile;
+		CFileException fileExpt;
+		BOOL fileOpenFlag = stdioFile.Open(filePath, CFile::modeRead, &fileExpt);
+		if (fileOpenFlag) {
+			CString str;
+			while (stdioFile.ReadString(str))
+			{
+				vc.push_back(str);
+			}
+		}
+		stdioFile.Close();
+		return TRUE;
+	}
+	else {
+		return FALSE;
+	}
+}
+
+
+CString CZMyFile::GetWorkDir()
+{
+	wchar_t pFileName[MAX_PATH];
+	int nPos = GetCurrentDirectory(MAX_PATH, pFileName);
+	CString csFullPath(pFileName);
+	if (nPos < 0) {
+		return CString("");
+	}else {
+		return csFullPath;
+	}	
+}
+
+
+BOOL CZMyFile::DefaultTrajonFeature(vector<CString> &vc)
+{
+	CString str(L"<?php");
+	vc.push_back(str);
+	return 0;
 }

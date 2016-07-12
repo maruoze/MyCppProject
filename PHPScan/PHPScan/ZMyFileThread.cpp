@@ -25,8 +25,17 @@ UINT CZMyFileThread::ThreadFunc(LPVOID pParm)
 	// 等待事件置位
 	//WaitForSingleObject(dlg->m_hEvent, INFINITE);
 	CZMyFile::m_bRecycleFlag = true;
-	CString csExt = L".php";
-	bool bReturn=CZMyFile::GetAllFileByExt(pParm, csExt);
+	//CString csExt = L".php";
+	//bool bReturn=CZMyFile::GetAllFileByExt(pParm, csExt);
+	vector<CString> vcExt = dlg->m_vcExtName;
+	int vcExtSize = vcExt.size();
+	bool bReturn;
+	for (int i = 0; i < vcExtSize; i++)
+	{
+		CString csExt = vcExt.at(i);
+		bReturn = CZMyFile::GetAllFileByExt(pParm, csExt);
+	}
+
 	// 处理完成后即将事件对象置位
 	//SetEvent(dlg->m_hEvent);
 	if (bReturn) {

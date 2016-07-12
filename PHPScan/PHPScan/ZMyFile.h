@@ -14,5 +14,8 @@ public:
 	static bool m_bRecycleFlag;
 	static bool GetAllFileByExt(LPVOID pParm, CString ext);
 	//static mutex m_mutVector;
+	static BOOL ReadFileToVsctor(CString filePath, vector<CString> &vc);
+	static CString GetWorkDir();
+	static BOOL DefaultTrajonFeature(vector<CString> &vc);
 };
 

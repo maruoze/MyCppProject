@@ -7,6 +7,8 @@
 #include "PHPScanDlg.h"
 #include "afxdialogex.h"
 
+#include "ZMyFile.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -66,6 +68,9 @@ CPHPScanDlg::CPHPScanDlg(CWnd* pParent /*=NULL*/)
 	m_intProgStart = 0;
 	m_intProgEnd = 100;
 	//  m_intThreadIndex = 0;
+	m_strWorkDir = _T("");
+	m_strPHPTrojanFeatureFile = _T("");
+	m_strTrojanFeatureFullPath = _T("");
 }
 
 void CPHPScanDlg::DoDataExchange(CDataExchange* pDX)
@@ -84,6 +89,9 @@ void CPHPScanDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_TOTAL_COUNT_FILE, m_staticTotalCountFile);
 	//  DDX_CBIndex(pDX, IDC_COMBO_THREAD_COUNT, m_cmThreadCount);
 	DDX_CBString(pDX, IDC_COMBO_THREAD_COUNT, m_cmThreadCount);
+	DDX_Control(pDX, IDC_CHECK_PHP, m_cbCheckPHP);
+	DDX_Control(pDX, IDC_CHECK_INC, m_cbCheckINC);
+	DDX_Control(pDX, IDC_CHECK_TXT, m_cbCheckTXT);
 }
 
 BEGIN_MESSAGE_MAP(CPHPScanDlg, CDialogEx)
@@ -214,7 +222,10 @@ void CPHPScanDlg::SetWindowDisplay()
 	//初始化相关控件
 	m_staticTotalCount.Format(L"%d", 0);
 	m_staticPath = L"E:\\";
-	InitControl();
+	m_cbCheckPHP.SetCheck(1);
+	this->InitConfig();
+	this->InitControl();
+	this->InitListResult();
 	UpdateData(false);
 }
 
@@ -272,16 +283,32 @@ void CPHPScanDlg::OnClickedButtonStart()
 		m_hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 		// 事件置位
 		SetEvent(m_hEvent);
-		m_strButtonStart.LoadStringW(IDS_STRING_SUSPEND);
-		m_buttonStart.SetWindowTextW(m_strButtonStart);
-		//任务线程操作
-		m_ctMyThread.m_intThreadMax = 1;
-		m_ctThread=m_ctMyThread.CreateThread(this);
-		m_intRunTime = 0;
-		m_ctThreadFlag = 0;//运行
 		InitControl();
-		GetDlgItem(IDC_COMBO_THREAD_COUNT)->EnableWindow(FALSE);
-		PostMessage(WM_ZMY_REFRESH);
+		InitExtNameVC();
+		if (!m_vcExtName.empty()) {
+			m_listResult.DeleteAllItems();
+			m_strButtonStart.LoadStringW(IDS_STRING_SUSPEND);
+			m_buttonStart.SetWindowTextW(m_strButtonStart);
+			//任务线程操作
+			m_ctMyThread.m_intThreadMax = 1;
+			m_ctThread = m_ctMyThread.CreateThread(this);
+			m_intRunTime = 0;
+			m_ctThreadFlag = 0;//运行
+			GetDlgItem(IDC_COMBO_THREAD_COUNT)->EnableWindow(FALSE);
+			PostMessage(WM_ZMY_REFRESH);
+			m_staticTotalCountFile = L"0";
+			//刷新显示
+			KillTimer(ID_TIMER_REFRESH);
+			SetTimer(ID_TIMER_REFRESH, 100, NULL);
+			if (m_buttonStop.IsWindowEnabled() == FALSE) {
+				m_buttonStop.EnableWindow(true);
+			}
+			if (m_buttonBrowser.IsWindowEnabled() == TRUE) {
+				m_buttonBrowser.EnableWindow(FALSE);
+			}
+		}else {
+			this->MessageBox(L"请选择搜索文件的扩展名", L"提示：", MB_OK);
+		}
 	}else if(m_strButtonStart==strButtonPause) {
 		m_strButtonStart.LoadStringW(IDS_STRING_CONTINUE);
 		m_buttonStart.SetWindowTextW(m_strButtonStart);
@@ -293,16 +320,6 @@ void CPHPScanDlg::OnClickedButtonStart()
 		m_ctMyThread.ThreadResume(m_ctThread);
 		m_ctThreadFlag = 0;
 	}
-	if (m_buttonStop.IsWindowEnabled()==FALSE) {
-		m_buttonStop.EnableWindow(true);
-	}	
-	if (m_buttonBrowser.IsWindowEnabled() == TRUE) {
-		m_buttonBrowser.EnableWindow(FALSE);
-	}
-	m_staticTotalCountFile = L"0";
-	//刷新显示
-	KillTimer(ID_TIMER_REFRESH);
-	SetTimer(ID_TIMER_REFRESH, 100, NULL);
 }
 
 
@@ -321,10 +338,15 @@ void CPHPScanDlg::OnClickedButtonStop()
 
 afx_msg LRESULT CPHPScanDlg::OnZmyRefresh(WPARAM wParam, LPARAM lParam)
 {
-	int pos = m_intProgCur* 100 / m_allFolders.size() ;
+	int iExtNameSize = m_vcExtName.size();
+	int iTatal = m_allFolders.size()*iExtNameSize;
+	int pos = 0;
+	if (iTatal > 0) {
+		pos = m_intProgCur * 100 / (m_allFolders.size()*iExtNameSize);
+	}
 	m_progScan.SetPos(pos);
 	CString staticTotalCount,staticTotalCountFile, staticCurCount;
-	staticTotalCount.Format(L"%d", m_allFolders.size());
+	staticTotalCount.Format(L"%d", m_allFolders.size()*iExtNameSize);
 	m_staticTotalCount = staticTotalCount;
 	staticTotalCountFile.Format(L"%d", m_vcAllFileResult.size());
 	m_staticTotalCountFile = staticTotalCountFile;
@@ -415,6 +437,7 @@ afx_msg LRESULT CPHPScanDlg::OnZmyGetallfileExit(WPARAM wParam, LPARAM lParam)
 		if (m_buttonBrowser.IsWindowEnabled() == false) {
 			m_buttonBrowser.EnableWindow(true);
 		}
+		GetDlgItem(IDC_COMBO_THREAD_COUNT)->EnableWindow(TRUE);
 		KillTimer(ID_TIMER_REFRESH);
 		PostMessage(WM_ZMY_REFRESH);
 	}
@@ -431,6 +454,9 @@ int CPHPScanDlg::InitControl()
 	m_progScan.SetRange(m_intProgStart, m_intProgEnd);
 	m_progScan.SetStep(1);
 	m_progScan.SetPos(0);
+	m_allFolders.clear();
+	m_vcAllFileResult.clear();
+	m_intProgCur = 0;
 	return 0;
 }
 
@@ -439,4 +465,50 @@ void CPHPScanDlg::OnCbnSelchangeComboThreadCount()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	UpdateData(true);
+}
+
+
+int CPHPScanDlg::InitConfig()
+{
+	m_strWorkDir = CZMyFile::GetWorkDir();
+	m_strPHPTrojanFeatureFile.LoadStringW(IDS_STRING_PHPTROJANF);
+	m_strTrojanFeatureFullPath = m_strWorkDir + "\\" + m_strPHPTrojanFeatureFile;
+	BOOL flag = CZMyFile::ReadFileToVsctor(m_strTrojanFeatureFullPath, m_vcPHPTrajonFeature);
+	if (!flag) {
+		CZMyFile::DefaultTrajonFeature(m_vcPHPTrajonFeature);
+	}
+	return 0;
+}
+
+
+int CPHPScanDlg::InitExtNameVC()
+{
+	m_vcExtName.clear();
+	/*
+	m_vcExtName.push_back(L".php");
+	m_vcExtName.push_back(L".txt");
+	m_vcExtName.push_back(L".log");
+	*/
+	if (m_cbCheckPHP.GetCheck()) {
+		m_vcExtName.push_back(L".php");
+	}
+	if (m_cbCheckINC.GetCheck()) {
+		m_vcExtName.push_back(L".inc");
+	}
+	if (m_cbCheckTXT.GetCheck()) {
+		m_vcExtName.push_back(L".txt");
+	}
+	//m_vcExtName.push_back(L".php");
+	return 0;
+}
+
+
+int CPHPScanDlg::InitListResult()
+{
+	m_listResult.SetExtendedStyle(LVS_EX_CHECKBOXES);
+	m_listResult.InsertColumn(0, L"", LVCFMT_LEFT, 30);
+	m_listResult.InsertColumn(1, L"ID", LVCFMT_LEFT, 60);
+	m_listResult.InsertColumn(2, L"文件名", LVCFMT_LEFT, 120);
+	m_listResult.InsertColumn(3, L"文件路径", LVCFMT_LEFT, 360);
+	return 0;
 }
