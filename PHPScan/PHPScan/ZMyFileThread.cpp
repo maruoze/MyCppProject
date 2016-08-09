@@ -22,7 +22,7 @@ UINT CZMyFileThread::ThreadFunc(LPVOID pParm)
 	CPHPScanDlg* dlg = (CPHPScanDlg*)lpParm->second;
 	CString strCurCount, strThreadIndex;
 	int intThreadIndex = lpParm->first;
-	// 等待事件置位
+	// 等待事件置位：下条语句被注释是因为GetAllFileByExt用了锁
 	//WaitForSingleObject(dlg->m_hEvent, INFINITE);
 	CZMyFile::m_bRecycleFlag = true;
 	//CString csExt = L".php";
@@ -51,9 +51,10 @@ vector<CWinThread*> CZMyFileThread::CreateThread(LPVOID lpPara)
 {
 	m_dlgWnd = lpPara;
 	vector<CWinThread*> p_ctThread;
-	CPHPScanDlg* dlg = (CPHPScanDlg*)lpPara;
-	dlg->m_vcAllFileResult.clear();
-	dlg->m_intProgCur = 0;
+	//下面三条语句被注释是因为在CPHPScanDlg::InitControl()中数据已经被清理
+	//CPHPScanDlg* dlg = (CPHPScanDlg*)lpPara;
+	//dlg->m_vcAllFileResult.clear();
+	//dlg->m_intProgCur = 0;
 	for (int i = 0; i < m_intThreadMax; i++)
 	{
 		pair<int, LPVOID> *pLpPara = new pair<int, LPVOID>;

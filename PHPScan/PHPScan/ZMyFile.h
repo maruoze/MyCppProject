@@ -17,5 +17,7 @@ public:
 	static BOOL ReadFileToVsctor(CString filePath, vector<CString> &vc);
 	static CString GetWorkDir();
 	static BOOL DefaultTrajonFeature(vector<CString> &vc);
+	static bool GetAllTrajonResult(LPVOID pParm);
+	static bool ReadFileToCString(CString filePath, CString &fileContent);
 };
 

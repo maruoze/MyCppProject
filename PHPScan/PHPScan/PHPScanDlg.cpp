@@ -109,6 +109,8 @@ BEGIN_MESSAGE_MAP(CPHPScanDlg, CDialogEx)
 	ON_MESSAGE(WM_ZMY_GETALLFOLDER_EXIT, &CPHPScanDlg::OnZmyGetallfolderExit)
 	ON_MESSAGE(WM_ZMY_GETALLFILE_EXIT, &CPHPScanDlg::OnZmyGetallfileExit)
 	ON_CBN_SELCHANGE(IDC_COMBO_THREAD_COUNT, &CPHPScanDlg::OnCbnSelchangeComboThreadCount)
+	ON_MESSAGE(WM_ZMY_COMPARE_FINISH, &CPHPScanDlg::OnZmyCompareFinish)
+	ON_MESSAGE(WM_ZMY_COMPARE_EXIT, &CPHPScanDlg::OnZmyCompareExit)
 END_MESSAGE_MAP()
 
 
@@ -221,7 +223,7 @@ void CPHPScanDlg::SetWindowDisplay()
 	this->SetWindowPos(NULL, 0, 0, widowRect.Width(), widowRect.Height(), SWP_NOZORDER | SWP_NOMOVE);
 	//初始化相关控件
 	m_staticTotalCount.Format(L"%d", 0);
-	m_staticPath = L"E:\\";
+	m_staticPath = L"E:\\WebRoot\\myphp";
 	m_cbCheckPHP.SetCheck(1);
 	this->InitConfig();
 	this->InitControl();
@@ -402,6 +404,7 @@ afx_msg LRESULT CPHPScanDlg::OnZmyGetallfileFinish(WPARAM wParam, LPARAM lParam)
 {
 	m_intThreadFinshed++;
 	if (m_intThreadFinshed == m_ctMyFileThread.m_intThreadMax) {
+		/*
 		m_buttonStop.EnableWindow(false);
 		m_strButtonStart.LoadStringW(IDS_STRING_START);
 		m_buttonStart.SetWindowTextW(m_strButtonStart);
@@ -412,6 +415,9 @@ afx_msg LRESULT CPHPScanDlg::OnZmyGetallfileFinish(WPARAM wParam, LPARAM lParam)
 		GetDlgItem(IDC_COMBO_THREAD_COUNT)->EnableWindow(TRUE);
 		KillTimer(ID_TIMER_REFRESH);
 		PostMessage(WM_ZMY_REFRESH);
+		*/
+		m_intThreadFinshed = 0;
+		m_ctThread = m_ctMyCompareThread.CreateThread(this);
 	}
 	return 0;
 }
@@ -430,6 +436,7 @@ afx_msg LRESULT CPHPScanDlg::OnZmyGetallfileExit(WPARAM wParam, LPARAM lParam)
 {
 	m_intThreadFinshed++;
 	if (m_intThreadFinshed == m_ctMyFileThread.m_intThreadMax) {
+		m_intThreadFinshed = 0;
 		m_buttonStop.EnableWindow(false);
 		m_strButtonStart.LoadStringW(IDS_STRING_START);
 		m_buttonStart.SetWindowTextW(m_strButtonStart);
@@ -510,5 +517,47 @@ int CPHPScanDlg::InitListResult()
 	m_listResult.InsertColumn(1, L"ID", LVCFMT_LEFT, 60);
 	m_listResult.InsertColumn(2, L"文件名", LVCFMT_LEFT, 120);
 	m_listResult.InsertColumn(3, L"文件路径", LVCFMT_LEFT, 360);
+	m_listResult.InsertColumn(4, L"匹配位置", LVCFMT_LEFT, 80);
+	m_listResult.InsertColumn(5, L"匹配字符", LVCFMT_LEFT, 120);
+	return 0;
+}
+
+
+afx_msg LRESULT CPHPScanDlg::OnZmyCompareFinish(WPARAM wParam, LPARAM lParam)
+{
+	m_intThreadFinshed++;
+	if (m_intThreadFinshed == m_ctMyFileThread.m_intThreadMax) {
+		m_intThreadFinshed = 0;
+		m_buttonStop.EnableWindow(false);
+		m_strButtonStart.LoadStringW(IDS_STRING_START);
+		m_buttonStart.SetWindowTextW(m_strButtonStart);
+		m_ctThreadFlag = 2;
+		if (m_buttonBrowser.IsWindowEnabled() == false) {
+		m_buttonBrowser.EnableWindow(true);
+		}
+		GetDlgItem(IDC_COMBO_THREAD_COUNT)->EnableWindow(TRUE);
+		KillTimer(ID_TIMER_REFRESH);
+		PostMessage(WM_ZMY_REFRESH);
+	}
+	return 0;
+}
+
+
+afx_msg LRESULT CPHPScanDlg::OnZmyCompareExit(WPARAM wParam, LPARAM lParam)
+{
+	m_intThreadFinshed++;
+	if (m_intThreadFinshed == m_ctMyFileThread.m_intThreadMax) {
+		m_intThreadFinshed = 0;
+		m_buttonStop.EnableWindow(false);
+		m_strButtonStart.LoadStringW(IDS_STRING_START);
+		m_buttonStart.SetWindowTextW(m_strButtonStart);
+		m_ctThreadFlag = 2;
+		if (m_buttonBrowser.IsWindowEnabled() == false) {
+			m_buttonBrowser.EnableWindow(true);
+		}
+		GetDlgItem(IDC_COMBO_THREAD_COUNT)->EnableWindow(TRUE);
+		KillTimer(ID_TIMER_REFRESH);
+		PostMessage(WM_ZMY_REFRESH);
+	}
 	return 0;
 }

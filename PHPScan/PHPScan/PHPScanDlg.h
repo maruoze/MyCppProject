@@ -10,6 +10,7 @@
 //新类添加
 #include "ZMyCallbackProc.h"
 #include "ZMyFileThread.h"
+#include "ZMyCompareThread.h"
 
 //自定义消息
 #define WM_ZMY_REFRESH WM_USER+1
@@ -17,6 +18,8 @@
 #define WM_ZMY_GETALLFILE_FINISH WM_USER+3
 #define WM_ZMY_GETALLFOLDER_EXIT WM_USER+4
 #define WM_ZMY_GETALLFILE_EXIT WM_USER+5
+#define WM_ZMY_COMPARE_FINISH WM_USER+6
+#define WM_ZMY_COMPARE_EXIT WM_USER+7
 
 
 // CPHPScanDlg 对话框
@@ -73,6 +76,7 @@ public:
 //	int m_intThreadIndex;
 	CZMyThread m_ctMyThread;
 	CZMyFileThread m_ctMyFileThread;
+	CZMyCompareThread m_ctMyCompareThread;
 	vector<CWinThread*> m_ctThread;
 	HANDLE m_hEvent;
 	vector<CString> m_allFolders;
@@ -116,4 +120,9 @@ public:
 	CButton m_cbCheckPHP;
 	CButton m_cbCheckINC;
 	CButton m_cbCheckTXT;
+protected:
+	afx_msg LRESULT OnZmyCompareFinish(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnZmyCompareExit(WPARAM wParam, LPARAM lParam);
+public:
+	vector<CString> m_vcAllTrajonResult;
 };
