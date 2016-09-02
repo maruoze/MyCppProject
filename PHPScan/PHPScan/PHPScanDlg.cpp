@@ -111,6 +111,7 @@ BEGIN_MESSAGE_MAP(CPHPScanDlg, CDialogEx)
 	ON_CBN_SELCHANGE(IDC_COMBO_THREAD_COUNT, &CPHPScanDlg::OnCbnSelchangeComboThreadCount)
 	ON_MESSAGE(WM_ZMY_COMPARE_FINISH, &CPHPScanDlg::OnZmyCompareFinish)
 	ON_MESSAGE(WM_ZMY_COMPARE_EXIT, &CPHPScanDlg::OnZmyCompareExit)
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 
@@ -212,6 +213,19 @@ void CPHPScanDlg::OnAbout()
 // 初始化时设定窗口的大小
 void CPHPScanDlg::SetWindowDisplay()
 {
+	CRect rect;
+	GetClientRect(&rect);     //取客户区大小    
+	m_old.x = rect.right - rect.left;
+	m_old.y = rect.bottom - rect.top;
+	/*
+	int cx = GetSystemMetrics(SM_CXFULLSCREEN);
+	int cy = GetSystemMetrics(SM_CYFULLSCREEN);
+	CRect rt;
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &rt, 0);
+	cy = rt.bottom;
+	MoveWindow(0, 0, cx, cy);
+	*/
+
 	//设定窗口大小
 	int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
 	int screenHeight= ::GetSystemMetrics(SM_CYSCREEN);
@@ -463,6 +477,7 @@ int CPHPScanDlg::InitControl()
 	m_progScan.SetPos(0);
 	m_allFolders.clear();
 	m_vcAllFileResult.clear();
+	m_vcAllTrajonResult.clear();
 	m_intProgCur = 0;
 	return 0;
 }
@@ -560,4 +575,46 @@ afx_msg LRESULT CPHPScanDlg::OnZmyCompareExit(WPARAM wParam, LPARAM lParam)
 		PostMessage(WM_ZMY_REFRESH);
 	}
 	return 0;
+}
+
+
+void CPHPScanDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+	// TODO: 在此处添加消息处理程序代码
+	this->ReSize();
+}
+
+
+void CPHPScanDlg::ReSize()
+{
+	float fsp[2];
+	POINT Newp; //获取现在对话框的大小  
+	CRect recta;
+	GetClientRect(&recta);     //取客户区大小    
+	Newp.x = recta.right - recta.left;
+	Newp.y = recta.bottom - recta.top;
+	fsp[0] = (float)Newp.x / m_old.x;
+	fsp[1] = (float)Newp.y / m_old.y;
+	CRect Rect;
+	int woc;
+	CPoint OldTLPoint, TLPoint; //左上角  
+	CPoint OldBRPoint, BRPoint; //右下角  
+	HWND  hwndChild = ::GetWindow(m_hWnd, GW_CHILD);  //列出所有控件    
+	while (hwndChild)
+	{
+		woc = ::GetDlgCtrlID(hwndChild);//取得ID  
+		GetDlgItem(woc)->GetWindowRect(Rect);
+		ScreenToClient(Rect);
+		OldTLPoint = Rect.TopLeft();
+		TLPoint.x = long(OldTLPoint.x*fsp[0]);
+		TLPoint.y = long(OldTLPoint.y*fsp[1]);
+		OldBRPoint = Rect.BottomRight();
+		BRPoint.x = long(OldBRPoint.x *fsp[0]);
+		BRPoint.y = long(OldBRPoint.y *fsp[1]);
+		Rect.SetRect(TLPoint, BRPoint);
+		GetDlgItem(woc)->MoveWindow(Rect, TRUE);
+		hwndChild = ::GetWindow(hwndChild, GW_HWNDNEXT);
+	}
+	m_old = Newp;
 }

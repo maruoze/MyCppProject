@@ -125,4 +125,7 @@ protected:
 	afx_msg LRESULT OnZmyCompareExit(WPARAM wParam, LPARAM lParam);
 public:
 	vector<CString> m_vcAllTrajonResult;
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	POINT m_old;
+	void ReSize();
 };

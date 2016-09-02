@@ -175,6 +175,8 @@ BOOL CZMyFile::DefaultTrajonFeature(vector<CString> &vc)
 {
 	CString str(L"$_POST");
 	vc.push_back(str);
+	str = L"$_GET";
+	vc.push_back(str);
 	return 0;
 }
 
